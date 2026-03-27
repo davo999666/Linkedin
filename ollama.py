@@ -5,7 +5,8 @@ from pydantic import BaseModel
 import json, logging, requests, re
 # ------------------------------------------------------------------- constants
 CV_FILE_PATH = Path("CV.pdf")
-
+OLLAMA_URL   = "http://127.0.0.1:11434/api/generate"
+OLLAMA_MODEL = "qwen3:8b"
 # ------------------------------------------------------------------- models
 class JobData(BaseModel):
     url: str
@@ -13,21 +14,28 @@ class JobData(BaseModel):
     description: str
 
 
-OLLAMA_URL   = "http://127.0.0.1:11434/api/generate"
-OLLAMA_MODEL = "qwen3:8b"
-
 def ask_ollama(cv_text: str, job_title: str, job_description: str) -> str:
     prompt = f"""
 You are a strict CV‑job matching assistant.
 
 STRICT RULES:
+- Use at most 1000 tokens for the response
 - Use ONLY explicit information from the CV and job description
 - Do NOT guess, infer, or assume missing skills
+
 
 OUTPUT FORMAT:
 Return ONLY valid JSON as plain text (no markdown, no fences).
 
-{{"match_percent": number, "matching_job_skills": string[], "missing_skills": [{{"skill": string, "what_is_it": string}}], "score_reason": string}}
+{{
+    "match_percent": number, 
+    "matching_job_skills": string[], 
+    "missing_skills": [{{
+        "skill": string, 
+        "what_is_it": string
+        }}], 
+    "score_reason": string
+    }}
 
 JOB TITLE: {job_title}
 JOB DESCRIPTION: {job_description}
@@ -38,7 +46,11 @@ CV: {cv_text}
         "model": OLLAMA_MODEL,
         "prompt": prompt,
         "stream": False,
-        "options": {"temperature": 0.1, "repeat_penalty": 1.1},
+        "options": {
+            "temperature": 0.1, 
+            "repeat_penalty": 1.1
+            },
+        "format": "json",
     }
 
     try:
