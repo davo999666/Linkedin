@@ -18,7 +18,7 @@ function showLoadingModal() {
             border-left: 4px solid #0073b1;
         ">
             <span style="font-size: 18px;">🤖</span>
-            <span style="color: #333; font-weight: bold; font-size: 14px;">Analyzing Job Match...</span>
+            <span style="color: #333; font-weight: bold; font-size: 14px;">Analyzing Job...</span>
         </div>
     `;
     document.body.appendChild(toast);

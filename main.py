@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from get_cv import read_pdf_text
-from ollama import JobData, ask_ollama, CV_FILE_PATH
+from ollama import JobData, ask_ollama, ask_ollama_technologies, CV_FILE_PATH
 from translator import check_language, translate_to_english
 
 app = FastAPI()
@@ -80,3 +80,55 @@ async def receive_job(job: JobData):
                 "message": str(e),
             },
         )
+
+
+@app.post("/technologies")
+async def get_technologies(job: JobData):
+    start = time.perf_counter()
+
+    try:
+        title = job.title
+        description = job.description
+
+        lang = check_language(description)
+        if lang != "english":
+            print("Detected non-English job description. Translating to English...")
+            description = translate_to_english(description)
+            title = translate_to_english(title)
+
+        technologies_str = ask_ollama_technologies(
+            job_title=title,
+            job_description=description,
+        )
+
+        try:
+            technologies = json.loads(technologies_str)
+        except json.JSONDecodeError:
+            print("Failed to parse JSON from Ollama:")
+            print(technologies_str)
+            technologies = {"technologies": []}
+
+        duration = time.perf_counter() - start
+
+        return {
+            "status": "ok",
+            "job_url": job.url,
+            "job_title": title,
+            "technologies": technologies,
+            "processing_time_sec": round(duration, 2),
+        }
+
+    except Exception as e:
+        print("ERROR:", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": str(e),
+            },
+        )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

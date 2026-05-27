@@ -1,0 +1,8 @@
+fastapi
+pydantic
+transformers
+pymupdf
+requests
+sentencepiece
+torch
+uvicorn

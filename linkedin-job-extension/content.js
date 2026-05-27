@@ -21,8 +21,22 @@ async function sendSimple(title, description) {
         });
 
         const data = await res.json();
+        
+        if (data.status === "error") {
+            document.getElementById("ai-loading-toast")?.remove();
+            alert("Server Error: " + (data.message || "Unknown error"));
+            return;
+        }
+        
         const analysis = data.analysis;
         const time = data.processing_time_sec;
+        
+        if (!analysis) {
+            document.getElementById("ai-loading-toast")?.remove();
+            alert("No analysis data returned");
+            return;
+        }
+        
         showAnalysisModal(analysis, time);
     } catch (err) {
         document.getElementById("ai-loading-toast")?.remove();
@@ -48,8 +62,12 @@ function checkJobChange() {
     // 1. Try LinkedIn
     if (window.location.hostname.includes("linkedin.com")) {
         title = document.querySelector("h1")?.innerText?.trim() || "";
-        description = document.querySelector("#job-details")?.innerText?.trim() || "";
-    } 
+        // LinkedIn uses multiple possible selectors for job details
+        description = document.querySelector(".jobs-box__html-content")?.innerText?.trim()
+                   || document.querySelector("#job-details")?.innerText?.trim()
+                   || document.querySelector("[data-job-details]")?.innerText?.trim()
+                   || "";
+    }
     // 2. Try Yad2 / Drushim
     else {
         // Yad2 renders many jobs on the page but hides the descriptions of unclicked jobs.
