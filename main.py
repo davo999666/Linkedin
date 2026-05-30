@@ -8,7 +8,6 @@ from fastapi.responses import JSONResponse
 
 from get_cv import read_pdf_text
 from ollama import JobData, ask_ollama, CV_FILE_PATH
-from translator import check_language, translate_to_english
 
 app = FastAPI()
 
@@ -38,12 +37,6 @@ async def receive_job(job: JobData):
     try:
         title = job.title
         description = job.description
-
-        lang = check_language(description)
-        if lang != "english":
-            print("Detected non-English job description. Translating to English...")
-            description = translate_to_english(description)
-            title = translate_to_english(title)
 
         cv_text = get_cv_text()
 
